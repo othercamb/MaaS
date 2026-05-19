@@ -1,0 +1,723 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Router × Huawei MaaS — Guía de instalación</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #151820;
+    --bg3: #1c2030;
+    --border: rgba(255,255,255,0.07);
+    --border2: rgba(255,255,255,0.13);
+    --text: #e8eaf0;
+    --muted: #7a7f94;
+    --accent: #6c63ff;
+    --accent2: #00d4a0;
+    --amber: #f5a623;
+    --red: #ff6b6b;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    padding: 0;
+  }
+
+  /* header */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 2rem 2.5rem;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+  }
+  .header-left { flex: 1 }
+  .eyebrow {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--accent2);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+  }
+  .header h1 {
+    font-size: clamp(22px, 4vw, 34px);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+  .header h1 span { color: var(--accent) }
+  .meta {
+    display: flex;
+    gap: 12px;
+    margin-top: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+  .badge-steps { border-color: var(--accent); color: var(--accent) }
+  .badge-time { border-color: var(--accent2); color: var(--accent2) }
+  .badge-version { border-color: var(--muted); color: var(--muted) }
+
+  /* layout */
+  .layout {
+    display: grid;
+    grid-template-columns: 220px 1fr;
+    min-height: calc(100vh - 110px);
+  }
+
+  /* sidebar */
+  .sidebar {
+    border-right: 1px solid var(--border);
+    padding: 1.5rem 0;
+    position: sticky;
+    top: 0;
+    height: calc(100vh - 110px);
+    overflow-y: auto;
+  }
+  .sidebar-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+    padding: 0 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 1.25rem;
+    cursor: pointer;
+    transition: background 0.15s;
+    border-left: 2px solid transparent;
+  }
+  .nav-item:hover { background: rgba(255,255,255,0.03) }
+  .nav-item.active {
+    background: rgba(108,99,255,0.08);
+    border-left-color: var(--accent);
+  }
+  .nav-num {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .nav-item.active .nav-num {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .nav-item.done .nav-num {
+    background: rgba(0,212,160,0.15);
+    border-color: var(--accent2);
+    color: var(--accent2);
+  }
+  .nav-text { font-size: 13px; color: var(--muted); transition: color 0.15s }
+  .nav-item.active .nav-text { color: var(--text) }
+  .nav-item.done .nav-text { color: var(--accent2) }
+
+  /* main */
+  .main { padding: 2rem 2.5rem; max-width: 780px }
+
+  /* progress */
+  .progress-wrap { margin-bottom: 2rem }
+  .progress-track {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  .progress-seg {
+    flex: 1;
+    height: 3px;
+    background: var(--bg3);
+    border-radius: 2px;
+    transition: background 0.3s;
+  }
+  .progress-seg.done { background: var(--accent2) }
+  .progress-seg.active { background: var(--accent) }
+  .progress-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* step */
+  .step { display: none }
+  .step.visible { display: block }
+
+  .step-heading {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.25rem;
+  }
+  .step-icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+  .step-title { font-size: 20px; font-weight: 700; letter-spacing: -0.02em }
+  .step-sub { font-size: 13px; color: var(--muted); margin-top: 2px }
+
+  .desc {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.7;
+    margin-bottom: 1.25rem;
+  }
+
+  /* cards */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.1rem 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .card-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+  .checklist { list-style: none }
+  .checklist li {
+    font-size: 13px;
+    color: var(--muted);
+    padding: 5px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .checklist li:last-child { border-bottom: none }
+  .checklist li::before { content: '✓'; color: var(--accent2); font-size: 12px }
+
+  /* code */
+  .code-wrap { position: relative; margin: 8px 0 }
+  .code-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    letter-spacing: 0.06em;
+  }
+  pre {
+    background: #0a0c12;
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 1rem 1.1rem;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.8;
+    overflow-x: auto;
+    position: relative;
+  }
+  .copy-btn {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    background: var(--bg3);
+    border: 1px solid var(--border2);
+    border-radius: 5px;
+    padding: 3px 10px;
+    font-family: var(--mono);
+    font-size: 10px;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    z-index: 1;
+  }
+  .copy-btn:hover { color: var(--text); border-color: var(--accent) }
+  .copy-btn.ok { color: var(--accent2); border-color: var(--accent2) }
+
+  /* syntax colors */
+  .k { color: #c792ea }
+  .s { color: var(--accent2) }
+  .c { color: var(--muted) }
+  .v { color: #f78c6c }
+  .cmd { color: var(--accent) }
+
+  /* note */
+  .note {
+    background: rgba(245,166,35,0.06);
+    border-left: 3px solid var(--amber);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #c8a860;
+    line-height: 1.6;
+    margin: 10px 0;
+  }
+  .note code { font-family: var(--mono); font-size: 11.5px; color: var(--amber) }
+  .tip {
+    background: rgba(0,212,160,0.05);
+    border-left: 3px solid var(--accent2);
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: #5fbbaa;
+    line-height: 1.6;
+    margin: 10px 0;
+  }
+  .tip code { font-family: var(--mono); font-size: 11.5px; color: var(--accent2) }
+
+  /* nav buttons */
+  .nav-btns {
+    display: flex;
+    gap: 10px;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border);
+  }
+  .btn {
+    padding: 9px 22px;
+    border-radius: 7px;
+    border: 1px solid var(--border2);
+    background: transparent;
+    font-family: var(--sans);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    cursor: pointer;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .btn:hover { border-color: var(--accent); color: var(--accent) }
+  .btn-primary {
+    background: var(--accent);
+    border-color: var(--accent);
+    color: #fff;
+  }
+  .btn-primary:hover { background: #5a52e8; border-color: #5a52e8; color: #fff }
+
+  /* success card */
+  .success-card {
+    background: rgba(0,212,160,0.05);
+    border: 1px solid rgba(0,212,160,0.2);
+    border-radius: 10px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .success-icon { font-size: 24px; flex-shrink: 0 }
+  .success-title { font-size: 15px; font-weight: 600; color: var(--accent2); margin-bottom: 4px }
+  .success-desc { font-size: 13px; color: var(--muted); line-height: 1.6 }
+
+  /* commands table */
+  .cmd-table { width: 100%; border-collapse: collapse; font-size: 13px }
+  .cmd-table td {
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  .cmd-table td:first-child {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--accent);
+    white-space: nowrap;
+    width: 1%;
+    padding-right: 20px;
+  }
+  .cmd-table td:last-child { color: var(--muted) }
+  .cmd-table tr:last-child td { border-bottom: none }
+
+  @media (max-width: 640px) {
+    .layout { grid-template-columns: 1fr }
+    .sidebar { display: none }
+    .header { padding: 1.5rem }
+    .main { padding: 1.5rem }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="eyebrow">Guía de instalación</div>
+    <h1>Claude Code Router<br><span>× Huawei MaaS</span></h1>
+    <div class="meta">
+      <span class="badge badge-steps">6 pasos</span>
+      <span class="badge badge-time">~15 min</span>
+      <span class="badge badge-version">CCR v2.x · Node ≥ 18</span>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <nav class="sidebar">
+    <div class="sidebar-label">Pasos</div>
+    <div class="nav-item active" onclick="goTo(0)">
+      <div class="nav-num">1</div>
+      <span class="nav-text">Prerrequisitos</span>
+    </div>
+    <div class="nav-item" onclick="goTo(1)">
+      <div class="nav-num">2</div>
+      <span class="nav-text">Instalar CCR</span>
+    </div>
+    <div class="nav-item" onclick="goTo(2)">
+      <div class="nav-num">3</div>
+      <span class="nav-text">config.json</span>
+    </div>
+    <div class="nav-item" onclick="goTo(3)">
+      <div class="nav-num">4</div>
+      <span class="nav-text">settings.json</span>
+    </div>
+    <div class="nav-item" onclick="goTo(4)">
+      <div class="nav-num">5</div>
+      <span class="nav-text">Iniciar router</span>
+    </div>
+    <div class="nav-item" onclick="goTo(5)">
+      <div class="nav-num">6</div>
+      <span class="nav-text">Verificar y usar</span>
+    </div>
+  </nav>
+
+  <main class="main">
+    <div class="progress-wrap">
+      <div class="progress-track">
+        <div class="progress-seg active" id="ps0"></div>
+        <div class="progress-seg" id="ps1"></div>
+        <div class="progress-seg" id="ps2"></div>
+        <div class="progress-seg" id="ps3"></div>
+        <div class="progress-seg" id="ps4"></div>
+        <div class="progress-seg" id="ps5"></div>
+      </div>
+      <div class="progress-label" id="plabel">Paso 1 de 6</div>
+    </div>
+
+    <!-- STEP 1 -->
+    <div class="step visible" id="step0">
+      <div class="step-heading">
+        <div class="step-icon">🔧</div>
+        <div>
+          <div class="step-title">Prerrequisitos</div>
+          <div class="step-sub">Verifica tu entorno antes de instalar</div>
+        </div>
+      </div>
+
+      <p class="desc">Antes de instalar Claude Code Router, asegúrate de tener las siguientes herramientas instaladas y una cuenta activa en Huawei Cloud con acceso a MaaS.</p>
+
+      <div class="card">
+        <div class="card-label">Verificar versiones instaladas</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">node</span> --version    <span class="c"># Necesitas ≥ 18</span>
+<span class="cmd">npm</span> --version
+<span class="cmd">claude</span> --version  <span class="c"># Claude Code</span><button class="copy-btn" onclick="cp(this,'node --version\nnpm --version\nclaude --version')">copiar</button></pre>
+        </div>
+        <div class="note">Si no tienes Claude Code instalado: <code>npm install -g @anthropic-ai/claude-code</code></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Requerimientos de Huawei MaaS</div>
+        <ul class="checklist">
+          <li>Cuenta activa en Huawei Cloud (región Asia-Pacific)</li>
+          <li>Acceso habilitado al servicio ModelArts MaaS</li>
+          <li>API Key de MaaS generada en la consola</li>
+          <li>Al menos un modelo suscrito (GLM-4, Mistral, Llama 3…)</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div class="step" id="step1">
+      <div class="step-heading">
+        <div class="step-icon">📦</div>
+        <div>
+          <div class="step-title">Instalar Claude Code Router</div>
+          <div class="step-sub">Instalación global via npm</div>
+        </div>
+      </div>
+
+      <p class="desc">CCR es un proxy local que intercepta los requests de Claude Code y los redirige a Huawei MaaS. Puedes instalarlo globalmente o usarlo con npx sin instalación permanente.</p>
+
+      <div class="card">
+        <div class="card-label">Opción A — instalación global (recomendada)</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">npm</span> install -g @musistudio/claude-code-router<button class="copy-btn" onclick="cp(this,'npm install -g @musistudio/claude-code-router')">copiar</button></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Opción B — sin instalación permanente (npx)</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">npx</span> -y @musistudio/claude-code-router start<button class="copy-btn" onclick="cp(this,'npx -y @musistudio/claude-code-router start')">copiar</button></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Verificar instalación</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">ccr</span> --version<button class="copy-btn" onclick="cp(this,'ccr --version')">copiar</button></pre>
+        </div>
+      </div>
+
+      <div class="tip">También disponible via Homebrew: <code>brew install claude-code-router</code></div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div class="step" id="step2">
+      <div class="step-heading">
+        <div class="step-icon">⚙️</div>
+        <div>
+          <div class="step-title">Configurar config.json</div>
+          <div class="step-sub">Define el proveedor Huawei MaaS y las rutas</div>
+        </div>
+      </div>
+
+      <p class="desc">Este archivo configura los proveedores disponibles y las reglas de enrutamiento. CCR lo busca en <code style="font-family:var(--mono);font-size:12px;color:var(--accent)">~/.claude-code-router/config.json</code>.</p>
+
+      <div class="card">
+        <div class="card-label">~/.claude-code-router/config.json</div>
+        <div class="code-wrap">
+          <pre>{
+  <span class="k">"Providers"</span>: [
+    {
+      <span class="k">"name"</span>: <span class="s">"huawei-maas"</span>,
+      <span class="k">"api_base_url"</span>: <span class="s">"https://api-ap-southeast-1.modelarts-maas.com/anthropic"</span>,
+      <span class="k">"api_key"</span>: <span class="s">"TU_API_KEY_HUAWEI_MAAS"</span>,
+      <span class="k">"models"</span>: [<span class="s">"glm-4"</span>, <span class="s">"mistral-large"</span>, <span class="s">"llama-3-70b"</span>]
+    }
+  ],
+  <span class="k">"Router"</span>: {
+    <span class="k">"default"</span>:     <span class="s">"huawei-maas,glm-4"</span>,
+    <span class="k">"background"</span>:  <span class="s">"huawei-maas,glm-4"</span>,
+    <span class="k">"think"</span>:       <span class="s">"huawei-maas,mistral-large"</span>,
+    <span class="k">"longContext"</span>: <span class="s">"huawei-maas,llama-3-70b"</span>
+  },
+  <span class="k">"ANTHROPIC_BASE_URL"</span>: <span class="s">"http://127.0.0.1:3456"</span>
+}<button class="copy-btn" onclick="cp(this,`{\n  \"Providers\": [\n    {\n      \"name\": \"huawei-maas\",\n      \"api_base_url\": \"https://api-ap-southeast-1.modelarts-maas.com/anthropic\",\n      \"api_key\": \"TU_API_KEY_HUAWEI_MAAS\",\n      \"models\": [\"glm-4\", \"mistral-large\", \"llama-3-70b\"]\n    }\n  ],\n  \"Router\": {\n    \"default\":     \"huawei-maas,glm-4\",\n    \"background\":  \"huawei-maas,glm-4\",\n    \"think\":       \"huawei-maas,mistral-large\",\n    \"longContext\": \"huawei-maas,llama-3-70b\"\n  },\n  \"ANTHROPIC_BASE_URL\": \"http://127.0.0.1:3456\"\n}`)">copiar</button></pre>
+        </div>
+        <div class="note">Reemplaza <code>TU_API_KEY_HUAWEI_MAAS</code> con tu clave real. Los nombres de modelos deben coincidir exactamente con los suscritos en MaaS.</div>
+      </div>
+    </div>
+
+    <!-- STEP 4 -->
+    <div class="step" id="step3">
+      <div class="step-heading">
+        <div class="step-icon">📝</div>
+        <div>
+          <div class="step-title">Configurar settings.json de Claude Code</div>
+          <div class="step-sub">Apunta Claude Code al router local</div>
+        </div>
+      </div>
+
+      <p class="desc">Edita el archivo de configuración de Claude Code para que use el router local en vez de la API de Anthropic directamente.</p>
+
+      <div class="card">
+        <div class="card-label">Ruta según sistema operativo</div>
+        <div class="code-wrap">
+          <div class="code-label">macOS / Linux</div>
+          <pre><span class="v">~/.claude/settings.json</span></pre>
+        </div>
+        <div class="code-wrap">
+          <div class="code-label">Windows</div>
+          <pre><span class="v">%APPDATA%\Claude\settings.json</span></pre>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Contenido del archivo</div>
+        <div class="code-wrap">
+          <pre>{
+  <span class="k">"env"</span>: {
+    <span class="k">"ANTHROPIC_AUTH_TOKEN"</span>: <span class="s">"TU_API_KEY_HUAWEI_MAAS"</span>,
+    <span class="k">"ANTHROPIC_BASE_URL"</span>:   <span class="s">"http://127.0.0.1:3456"</span>,
+    <span class="k">"ANTHROPIC_MODEL"</span>:       <span class="s">"glm-4"</span>,
+    <span class="k">"NO_PROXY"</span>:             <span class="s">"127.0.0.1"</span>
+  }
+}<button class="copy-btn" onclick="cp(this,`{\n  \"env\": {\n    \"ANTHROPIC_AUTH_TOKEN\": \"TU_API_KEY_HUAWEI_MAAS\",\n    \"ANTHROPIC_BASE_URL\":   \"http://127.0.0.1:3456\",\n    \"ANTHROPIC_MODEL\":       \"glm-4\",\n    \"NO_PROXY\":             \"127.0.0.1\"\n  }\n}`)">copiar</button></pre>
+        </div>
+        <div class="note"><code>NO_PROXY=127.0.0.1</code> evita que proxies del sistema interfieran con la conexión local al router.</div>
+      </div>
+    </div>
+
+    <!-- STEP 5 -->
+    <div class="step" id="step4">
+      <div class="step-heading">
+        <div class="step-icon">🚀</div>
+        <div>
+          <div class="step-title">Iniciar el router y Claude Code</div>
+          <div class="step-sub">Arrancar en el orden correcto</div>
+        </div>
+      </div>
+
+      <p class="desc">El router debe estar corriendo <em>antes</em> de iniciar Claude Code. Necesitarás dos terminales.</p>
+
+      <div class="card">
+        <div class="card-label">Terminal 1 — iniciar el router</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">ccr</span> start<button class="copy-btn" onclick="cp(this,'ccr start')">copiar</button></pre>
+        </div>
+        <div class="tip">Verifica que está activo: <code>curl http://127.0.0.1:3456/health</code></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Terminal 2 — activar variables y arrancar Claude Code</div>
+        <div class="code-wrap">
+          <pre><span class="cmd">eval</span> <span class="s">"$(ccr activate)"</span>
+<span class="cmd">claude</span><button class="copy-btn" onclick="cp(this,'eval \"$(ccr activate)\"\nclaude')">copiar</button></pre>
+        </div>
+        <div class="note">Para que las variables sean persistentes entre sesiones, agrega <code>eval "$(ccr activate)"</code> a tu <code>~/.zshrc</code> o <code>~/.bashrc</code>.</div>
+      </div>
+    </div>
+
+    <!-- STEP 6 -->
+    <div class="step" id="step5">
+      <div class="step-heading">
+        <div class="step-icon">✅</div>
+        <div>
+          <div class="step-title">Verificar y usar</div>
+          <div class="step-sub">Comandos útiles y routing avanzado</div>
+        </div>
+      </div>
+
+      <div class="success-card">
+        <div class="success-icon">🎉</div>
+        <div>
+          <div class="success-title">Instalación completa</div>
+          <div class="success-desc">Claude Code ahora enruta tus requests a través de Huawei MaaS. Revisa los logs del router para confirmar qué modelo está atendiendo cada request.</div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Comandos dentro de Claude Code</div>
+        <table class="cmd-table">
+          <tr>
+            <td>/model huawei-maas,glm-4</td>
+            <td>Cambiar al modelo por defecto</td>
+          </tr>
+          <tr>
+            <td>/model huawei-maas,mistral-large</td>
+            <td>Cambiar a razonamiento avanzado</td>
+          </tr>
+          <tr>
+            <td>/model huawei-maas,llama-3-70b</td>
+            <td>Cambiar a contexto largo</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Comandos de gestión del router (terminal)</div>
+        <table class="cmd-table">
+          <tr>
+            <td>ccr restart</td>
+            <td>Reiniciar tras cambios en config.json</td>
+          </tr>
+          <tr>
+            <td>ccr status</td>
+            <td>Ver estado del router</td>
+          </tr>
+          <tr>
+            <td>ccr stop</td>
+            <td>Detener el router</td>
+          </tr>
+          <tr>
+            <td>ccr activate</td>
+            <td>Exportar variables de entorno a la sesión</td>
+          </tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Flujo de requests</div>
+        <pre style="font-size:11px;line-height:2">Claude Code  →  CCR (localhost:3456)  →  Huawei MaaS API
+                     ↓
+          Routing por tipo de tarea:
+          default / background  →  glm-4
+          think                 →  mistral-large
+          longContext           →  llama-3-70b<button class="copy-btn" onclick="cp(this,'')">—</button></pre>
+      </div>
+    </div>
+
+    <!-- NAV -->
+    <div class="nav-btns">
+      <button class="btn" id="btnPrev" onclick="nav(-1)" style="display:none">← Anterior</button>
+      <button class="btn btn-primary" id="btnNext" onclick="nav(1)">Siguiente →</button>
+    </div>
+  </main>
+</div>
+
+<script>
+let cur = 0;
+const total = 6;
+
+function goTo(n) {
+  document.getElementById('step'+cur).classList.remove('visible');
+  document.getElementById('ps'+cur).classList.remove('active','done');
+  document.querySelectorAll('.nav-item')[cur].classList.remove('active');
+  if (n > cur) document.querySelectorAll('.nav-item')[cur].classList.add('done');
+
+  for (let i = 0; i < n; i++) {
+    document.getElementById('ps'+i).classList.remove('active');
+    document.getElementById('ps'+i).classList.add('done');
+    document.querySelectorAll('.nav-item')[i].classList.add('done');
+    document.querySelectorAll('.nav-item')[i].classList.remove('active');
+  }
+  for (let i = n+1; i < total; i++) {
+    document.getElementById('ps'+i).classList.remove('active','done');
+    document.querySelectorAll('.nav-item')[i].classList.remove('done','active');
+  }
+
+  cur = n;
+  document.getElementById('step'+cur).classList.add('visible');
+  document.getElementById('ps'+cur).classList.add('active');
+  document.querySelectorAll('.nav-item')[cur].classList.add('active');
+  document.querySelectorAll('.nav-item')[cur].classList.remove('done');
+  document.getElementById('plabel').textContent = 'Paso ' + (cur+1) + ' de ' + total;
+  document.getElementById('btnPrev').style.display = cur === 0 ? 'none' : '';
+  document.getElementById('btnNext').style.display = cur === total-1 ? 'none' : '';
+  window.scrollTo(0, 0);
+}
+
+function nav(d) { goTo(Math.max(0, Math.min(total-1, cur+d))); }
+
+function cp(btn, text) {
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'copiado ✓';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copiar'; btn.classList.remove('ok'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
