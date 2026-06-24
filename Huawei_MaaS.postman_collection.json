@@ -1,0 +1,164 @@
+{
+  "info": {
+    "name": "Huawei Cloud MaaS",
+    "description": "Colección para invocar modelos de Huawei Cloud ModelArts Studio (MaaS).\n\nRuta correcta confirmada en documentación oficial: /v1/chat/completions (NO /v2/ ni /openai/v1/, esas rutas no existen y dan error APIG.0101).\n\nVariables usadas:\n- maas_base_url: host de la región (ej. https://api-ap-southeast-1.modelarts-maas.com)\n- maas_api_key: tu API Key de MaaS\n- model_name: nombre EXACTO del modelo, tal como aparece en 'View Call Description' en la consola MaaS (ej. deepseek-v3, glm-4.6, etc.)\n\nConfigura estas variables en el Environment 'Huawei MaaS - Env' incluido en esta colección.\n\nSi usas un servicio desplegado en 'My Services' (no un built-in service), la URL puede ser distinta a la de este ejemplo - cópiala exactamente desde 'View Call Description' en la consola.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Chat Completions (no streaming)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{maas_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"{{model_name}}\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n    {\"role\": \"user\", \"content\": \"Introduce yourself.\"}\n  ],\n  \"stream\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{maas_base_url}}/openai/v1/chat/completions",
+          "host": [
+            "{{maas_base_url}}"
+          ],
+          "path": [
+            "openai",
+            "v1",
+            "chat",
+            "completions"
+          ]
+        },
+        "description": "Ruta confirmada en 'View Call Description' de la consola (pestaña 'OpenAI-compatible APIs'): API URL = {{maas_base_url}}/openai/v1, por lo que la ruta completa de chat es /openai/v1/chat/completions."
+      },
+      "response": []
+    },
+    {
+      "name": "Chat Completions con Streaming (SSE)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{maas_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"{{model_name}}\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n    {\"role\": \"user\", \"content\": \"Introduce yourself.\"}\n  ],\n  \"stream\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{maas_base_url}}/openai/v1/chat/completions",
+          "host": [
+            "{{maas_base_url}}"
+          ],
+          "path": [
+            "openai",
+            "v1",
+            "chat",
+            "completions"
+          ]
+        },
+        "description": "Misma llamada pero con stream=true. Postman mostrará los chunks SSE conforme llegan. Esto es importante porque herramientas como VS Code Copilot suelen pedir streaming, y aquí puedes validar si tu endpoint lo soporta correctamente (causa común del error 'Sorry, no response was returned')."
+      },
+      "response": []
+    },
+    {
+      "name": "GLM/DeepSeek con Thinking habilitado",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{maas_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"{{model_name}}\",\n  \"messages\": [\n    {\"role\": \"system\", \"content\": \"You are a helpful assistant.\"},\n    {\"role\": \"user\", \"content\": \"Introduce yourself.\"}\n  ],\n  \"chat_template_kwargs\": {\n    \"thinking\": true\n  },\n  \"stream\": false\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{maas_base_url}}/openai/v1/chat/completions",
+          "host": [
+            "{{maas_base_url}}"
+          ],
+          "path": [
+            "openai",
+            "v1",
+            "chat",
+            "completions"
+          ]
+        },
+        "description": "Algunos modelos en MaaS (DeepSeek-V3.1, GLM, etc.) soportan el parámetro 'chat_template_kwargs.thinking' para activar razonamiento extendido (similar a 'reasoning' en otros proveedores)."
+      },
+      "response": []
+    },
+    {
+      "name": "Embeddings",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer {{maas_api_key}}"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"model\": \"bge-m3\",\n  \"input\": [\n    \"texto de ejemplo uno\",\n    \"texto de ejemplo dos\"\n  ],\n  \"encoding_format\": \"float\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{maas_base_url}}/openai/v1/embeddings",
+          "host": [
+            "{{maas_base_url}}"
+          ],
+          "path": [
+            "openai",
+            "v1",
+            "embeddings"
+          ]
+        },
+        "description": "Endpoint de embeddings vía ruta OpenAI-compatible. Ajusta el 'model' al modelo de embeddings al que estés suscrito (no todos los servicios built-in incluyen embeddings)."
+      },
+      "response": []
+    }
+  ]
+}
